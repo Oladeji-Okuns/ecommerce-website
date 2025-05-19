@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // Define environment variables for Docker
-        DOCKER_IMAGE = 'myusername/ecommerce-web-app'
+        DOCKER_IMAGE = 'dejdocka/ecommerce-website'
         DOCKER_TAG = 'latest'
     }
 
@@ -11,7 +11,7 @@ pipeline {
         // Checkout code
         stage('Checkout') {
             steps {
-                git 'https://github.com/username/repository.git'
+                git 'https://github.com/Oladeji-Okuns/ecommerce-website.git'
             }
         }
 
