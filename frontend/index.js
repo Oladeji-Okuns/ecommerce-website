@@ -6,5 +6,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(3000, () => {
-  console.log('Frontend running on port 3000');
+  console.log('Frontend currently running on port 3000');
 });
