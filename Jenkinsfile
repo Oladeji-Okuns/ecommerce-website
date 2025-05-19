@@ -1,42 +1,82 @@
 pipeline {
     agent any
+
+    environment {
+        // Define environment variables for Docker
+        DOCKER_IMAGE = 'myusername/ecommerce-web-app'
+        DOCKER_TAG = 'latest'
+    }
+
     stages {
-        stage('Install Nginx') {
+        // Checkout code
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/username/repository.git'
+            }
+        }
+
+        // Build stage: Build the application
+        stage('Build') {
             steps {
                 script {
-                    // Update package index and install Nginx
+                    sh 'npm install'
+                    sh 'npm run build'
+                }
+            }
+        }
+
+        // Docker build stage: Build Docker image
+        stage('Build Docker Image') {
+            steps {
+                script {
                     sh '''
-                        sudo apt update
-                        sudo apt install -y nginx
+                    docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
                     '''
                 }
             }
         }
-        stage('Clone Repository') {
-            steps {
-                // Clone your GitHub repository
-                git url: 'https://github.com/Oladeji-Okuns/ecommerce-website.git', branch: 'main'
-            }
-        }
-        stage('Deploy') {
-            steps {
-                // Copy index.html to the Nginx web server directory
-                sh '''
-                    sudo cp index.html /var/www/html/
-                    sudo systemctl restart nginx
-                '''
-            }
-        }
-        stage('Health Check') {
+
+        // Run Tests stage (optional, can run inside Docker)
+        stage('Test') {
             steps {
                 script {
-                    // Perform a health check to ensure Nginx is serving the page
-                    def response = sh(script: 'curl -s -o /dev/null -w "%{http_code}" http://localhost', returnStdout: true).trim()
-                    if (response != '200') {
-                        error("Health check failed with response code: ${response}")
-                    }
+                    sh 'npm run test'
                 }
             }
+        }
+
+        // Deploy the web app stage (running container locally)
+        stage('Run Docker Container Locally') {
+            steps {
+                script {
+                    sh '''
+                    docker run -d -p 8080:8080 ${DOCKER_IMAGE}:${DOCKER_TAG}
+                    '''
+                }
+            }
+        }
+
+        // Push Docker image to registry
+        stage('Push Docker Image to Registry') {
+            steps {
+                script {
+                    // Login to Docker Hub
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin'
+                    }
+                    // Push the image to Docker Hub
+                    sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline executed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
