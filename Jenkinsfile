@@ -11,7 +11,7 @@ pipeline {
         // Checkout code
         stage('Checkout') {
             steps {
-                git 'https://github.com/Oladeji-Okuns/ecommerce-website.git'
+                git branch: 'main', url: 'https://github.com/Oladeji-Okuns/ecommerce-website.git'
             }
         }
 
